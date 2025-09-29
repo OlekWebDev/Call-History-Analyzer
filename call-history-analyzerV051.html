@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Universal Call History Analyzer</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/date-fns@3.6.0/cdn.min.js"></script>
+
+    <style>
+        /* --- General Styling & Variables --- */
+        :root {
+            --bg-color: #121212;
+            --surface-color: #1e1e1e;
+            --primary-color: #3f51b5;
+            --primary-hover: #5c6bc0;
+            --text-color: #e0e0e0;
+            --text-muted: #9e9e9e;
+            --border-color: #333;
+            --success-color: #4caf50;
+            --error-color: #f44336;
+            --font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        /* --- Layout --- */
+        .container {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 2rem;
+            flex-grow: 1; 
+            min-height: 0;
+        }
+
+        header {
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1rem;
+        }
+
+        #controls-sidebar {
+            background-color: var(--surface-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+        
+        #main-content {
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        footer {
+            text-align: center;
+            padding-top: 1rem;
+            margin-top: auto; /* Pushes footer to the bottom */
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        /* --- UI Components --- */
+        h1, h2, h3 {
+            margin: 0;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+        h1 { font-size: 2rem; }
+        h2 { font-size: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem; margin-bottom: 1rem;}
+        h3 { font-size: 1.1rem; color: var(--text-muted); margin-bottom: 1rem; }
+
+        .control-section {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .card {
+            background-color: var(--surface-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: background-color 0.2s ease;
+        }
+        button:hover { background-color: var(--primary-hover); }
+        button:disabled { background-color: #555; cursor: not-allowed; }
+
+        label {
+            font-weight: 500;
+            color: var(--text-muted);
+            margin-bottom: -0.5rem;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+        .file-upload-label {
+            display: block;
+            padding: 0.75rem 1.5rem;
+            background-color: var(--surface-color);
+            border: 2px dashed var(--border-color);
+            border-radius: 6px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.2s, color 0.2s;
+        }
+        .file-upload-label:hover { border-color: var(--primary-color); color: var(--primary-color); }
+        
+        #file-name {
+            font-style: italic;
+            color: var(--success-color);
+            margin-top: 0.5rem;
+            text-align: center;
+        }
+
+        textarea, select {
+            width: 100%;
+            padding: 0.5rem;
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            border-radius: 4px;
+            font-family: var(--font-family);
+            box-sizing: border-box; /* Important for padding */
+        }
+        textarea { resize: vertical; min-height: 60px; }
+
+        /* --- Specific Section Styling --- */
+        #mapping-table-container { max-height: 400px; overflow-y: auto; }
+        #mapping-table { width: 100%; border-collapse: collapse; }
+        #mapping-table th, #mapping-table td {
+            text-align: left;
+            padding: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        #mapping-table th { color: var(--text-muted); }
+
+        .checkbox-group { display: flex; flex-direction: column; gap: 0.5rem; }
+        .checkbox-item { display: flex; align-items: center; }
+        .checkbox-item input { margin-right: 0.5rem; }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1.5rem;
+        }
+        .stat-card { text-align: center; }
+        .stat-card .value { font-size: 2rem; font-weight: 700; color: var(--primary-color); }
+        .stat-card .label { font-size: 1rem; color: var(--text-muted); }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 1.5rem;
+        }
+
+        #filtered-data-table-container {
+            max-height: 500px;
+            overflow: auto;
+        }
+        #filtered-data-table { width: 100%; border-collapse: collapse; }
+        #filtered-data-table th, #filtered-data-table td {
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            white-space: nowrap;
+        }
+        #filtered-data-table thead { position: sticky; top: 0; background-color: var(--surface-color); }
+
+        /* --- Utility & State Classes --- */
+        .hidden { display: none !important; }
+        .loading-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loading-overlay" class="loading-overlay hidden">Processing...</div>
+
+    <header>
+        <h1>Universal Call History Analyzer 📞</h1>
+    </header>
+
+    <div class="container">
+        <aside id="controls-sidebar">
+            <div class="control-section" id="upload-section">
+                <h2>1. Upload CSV</h2>
+                <label for="csv-file" class="file-upload-label">Click to select a file</label>
+                <input type="file" id="csv-file" accept=".csv">
+                <div id="file-name">No file selected.</div>
+            </div>
+
+            <div class="control-section hidden" id="mapping-section">
+                <h2>2. Map Columns</h2>
+                <div id="mapping-table-container"></div>
+                <button id="process-data-btn" disabled>Process Data</button>
+            </div>
+
+            <div class="control-section hidden" id="filters-section">
+                <h2>3. Filters</h2>
+                
+                <div class="filter-group">
+                    <label for="must-have-filter">Must-Have Values (comma-separated)</label>
+                    <textarea id="must-have-filter" placeholder="e.g., Sales, Follow-up"></textarea>
+                </div>
+                
+                <div class="filter-group">
+                    <label for="exclude-filter">Exclude Values (comma-separated)</label>
+                    <textarea id="exclude-filter" placeholder="e.g., Internal, Test"></textarea>
+                </div>
+
+                <div id="column-filters-container">
+                    </div>
+                <button id="apply-filters-btn">Apply Filters</button>
+            </div>
+        </aside>
+
+        <main id="main-content">
+            <div id="welcome-message" class="card">
+                <h2>Welcome!</h2>
+                <p>Start by uploading a CSV file of your call history using the panel on the left. The tool will then guide you through mapping columns, filtering, and visualizing your data.</p>
+            </div>
+
+            <div id="results-section" class="hidden">
+                <div class="card">
+                    <h2>Overall Summary</h2>
+                    <div class="stats-grid" id="stats-container">
+                        </div>
+                </div>
+
+                <div class="charts-grid">
+                    <div class="card">
+                        <h3>Calls Per User</h3>
+                        <canvas id="calls-per-user-chart"></canvas>
+                    </div>
+                     <div class="card">
+                        <h3>Calls By Direction</h3>
+                        <canvas id="calls-by-direction-chart"></canvas>
+                    </div>
+                    <div class="card">
+                        <h3>Call Volume Over Time</h3>
+                        <canvas id="calls-over-time-chart"></canvas>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>Filtered Call Data</h2>
+                    <div id="filtered-data-table-container">
+                         <table id="filtered-data-table">
+                            <thead id="data-table-head"></thead>
+                            <tbody id="data-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <footer>
+        2025 &copy; profitsplusx.com
+    </footer>
+
+<script>
+// A self-invoking async function to encapsulate the application logic
+(async () => {
+    // --- STATE MANAGEMENT ---
+    let rawData = [];
+    let headers = [];
+    let processedData = [];
+    let filteredData = [];
+    let columnMappings = {};
+    let chartInstances = {};
+
+    // --- DOM ELEMENT REFERENCES ---
+    const fileInput = document.getElementById('csv-file');
+    const fileNameDisplay = document.getElementById('file-name');
+    const mappingSection = document.getElementById('mapping-section');
+    const mappingTableContainer = document.getElementById('mapping-table-container');
+    const processDataBtn = document.getElementById('process-data-btn');
+    const filtersSection = document.getElementById('filters-section');
+    const applyFiltersBtn = document.getElementById('apply-filters-btn');
+    const welcomeMessage = document.getElementById('welcome-message');
+    const resultsSection = document.getElementById('results-section');
+    const loadingOverlay = document.getElementById('loading-overlay');
+    const statsContainer = document.getElementById('stats-container');
+    const columnFiltersContainer = document.getElementById('column-filters-container');
+    const dataTableHead = document.getElementById('data-table-head');
+    const dataTableBody = document.getElementById('data-table-body');
+    
+    // Use date-fns from the global window object loaded via CDN
+    const { parse, format, startOfWeek, startOfMonth, isValid } = window.dateFns;
+
+    // --- MAPPING CONFIGURATION ---
+    const MAPPING_ROLES = [
+        { id: 'ignore', label: 'Ignore' },
+        { id: 'DateTime', label: 'DateTime (Combined)' },
+        { id: 'Date', label: 'Date' },
+        { id: 'Time', label: 'Time' },
+        { id: 'Duration', label: 'Duration (sec or HH:MM:SS)' },
+        { id: 'Direction', label: 'Direction (In/Out)' },
+        { id: 'ToNumber', label: 'To Number' },
+        { id: 'FromNumber', label: 'From Number' },
+        { id: 'User', label: 'User / Agent' },
+        { id: 'Other', label: 'Other (Filterable)' },
+    ];
+    
+    const MAPPING_KEYWORDS = {
+        DateTime: ['datetime', 'timestamp'],
+        Date: ['date'],
+        Time: ['time'],
+        Duration: ['duration', 'length'],
+        Direction: ['direction', 'type'],
+        ToNumber: ['to', 'callee', 'destination'],
+        FromNumber: ['from', 'caller', 'source'],
+        User: ['user', 'agent', 'employee', 'name'],
+    };
+
+    // --- EVENT LISTENERS ---
+    fileInput.addEventListener('change', handleFileSelect);
+    processDataBtn.addEventListener('click', handleProcessData);
+    applyFiltersBtn.addEventListener('click', runAnalysis);
+    
+    // --- FUNCTIONS ---
+
+    /**
+     * Toggles the visibility of the loading overlay.
+     * @param {boolean} show - Whether to show or hide the overlay.
+     */
+    function toggleLoading(show) {
+        loadingOverlay.classList.toggle('hidden', !show);
+    }
+
+    /**
+     * Handles the selection of a CSV file. Parses the file and triggers UI setup.
+     */
+    function handleFileSelect(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        fileNameDisplay.textContent = file.name;
+        toggleLoading(true);
+
+        Papa.parse(file, {
+            header: true,
+            skipEmptyLines: true,
+            complete: (results) => {
+                rawData = results.data;
+                headers = results.meta.fields;
+                setupColumnMappingUI();
+                toggleLoading(false);
+            },
+            error: (err) => {
+                alert('Error parsing CSV file: ' + err.message);
+                toggleLoading(false);
+            }
+        });
+    }
+
+    /**
+     * Attempts to automatically map columns based on header keywords.
+     * @returns {Object} An object mapping header names to role IDs.
+     */
+    function autoDetectMappings() {
+        const detectedMappings = {};
+        const assignedHeaders = new Set();
+
+        for (const roleId in MAPPING_KEYWORDS) {
+            for (const keyword of MAPPING_KEYWORDS[roleId]) {
+                const foundHeader = headers.find(h => 
+                    !assignedHeaders.has(h) && h.toLowerCase().includes(keyword)
+                );
+                if (foundHeader) {
+                    detectedMappings[foundHeader] = roleId;
+                    assignedHeaders.add(foundHeader);
+                    break; 
+                }
+            }
+        }
+        return detectedMappings;
+    }
+
+    /**
+     * Creates and displays the column mapping table UI.
+     */
+    function setupColumnMappingUI() {
+        const detectedMappings = autoDetectMappings();
+        let tableHTML = `<table id="mapping-table"><thead><tr><th>CSV Column</th><th>Assign Role</th></tr></thead><tbody>`;
+
+        headers.forEach(header => {
+            const detectedRole = detectedMappings[header] || 'ignore';
+            const options = MAPPING_ROLES.map(role => 
+                `<option value="${role.id}" ${role.id === detectedRole ? 'selected' : ''}>${role.label}</option>`
+            ).join('');
+
+            tableHTML += `
+                <tr>
+                    <td>${header}</td>
+                    <td><select class="mapping-select" data-header="${header}">${options}</select></td>
+                </tr>
+            `;
+        });
+
+        tableHTML += `</tbody></table>`;
+        mappingTableContainer.innerHTML = tableHTML;
+        mappingSection.classList.remove('hidden');
+        processDataBtn.disabled = false;
+    }
+
+    /**
+     * Reads mapping choices from the UI, processes the raw data, and sets up the filter UI.
+     */
+    function handleProcessData() {
+        toggleLoading(true);
+        
+        // Use a timeout to allow the loading spinner to render before the heavy work
+        setTimeout(() => {
+            columnMappings = {};
+            document.querySelectorAll('.mapping-select').forEach(select => {
+                columnMappings[select.dataset.header] = select.value;
+            });
+
+            // Invert mapping for easier lookup: { Role -> HeaderName }
+            const roleToHeader = {};
+            for (const header in columnMappings) {
+                const role = columnMappings[header];
+                if (role !== 'ignore' && role !== 'Other') {
+                    roleToHeader[role] = header;
+                }
+            }
+
+            processedData = rawData.map((row, index) => {
+                const pRow = { original: row, id: index };
+
+                // Handle Date/Time parsing
+                let dateStr = '', timeStr = '';
+                if (roleToHeader.DateTime) {
+                    dateStr = row[roleToHeader.DateTime];
+                } else {
+                    if (roleToHeader.Date) dateStr = row[roleToHeader.Date];
+                    if (roleToHeader.Time) timeStr = row[roleToHeader.Time];
+                }
+                const fullDateTimeStr = `${dateStr} ${timeStr}`.trim();
+                // Attempt multiple common formats
+                const parsedDate = parse(fullDateTimeStr, 'yyyy-MM-dd HH:mm:ss', new Date())
+                                  || parse(fullDateTimeStr, 'MM/dd/yyyy HH:mm:ss', new Date())
+                                  || parse(fullDateTimeStr, 'yyyy-MM-dd HH:mm', new Date())
+                                  || parse(fullDateTimeStr, 'MM/dd/yyyy HH:mm', new Date())
+                                  || parse(fullDateTimeStr, 'yyyy-MM-dd', new Date())
+                                  || parse(fullDateTimeStr, 'MM/dd/yyyy', new Date());
+
+                pRow.DateTime = isValid(parsedDate) ? parsedDate : null;
+
+                // Handle Duration
+                const durationVal = row[roleToHeader.Duration] || '0';
+                pRow.Duration = 0;
+                if (typeof durationVal === 'string' && durationVal.includes(':')) {
+                    const parts = durationVal.split(':').map(Number);
+                    if (parts.length === 3) pRow.Duration = parts[0] * 3600 + parts[1] * 60 + parts[2];
+                    if (parts.length === 2) pRow.Duration = parts[0] * 60 + parts[1];
+                } else {
+                    pRow.Duration = parseInt(durationVal, 10) || 0;
+                }
+
+                // Handle other direct mappings
+                pRow.Direction = row[roleToHeader.Direction] || 'N/A';
+                pRow.ToNumber = row[roleToHeader.ToNumber] || 'N/A';
+                pRow.FromNumber = row[roleToHeader.FromNumber] || 'N/A';
+                pRow.User = row[roleToHeader.User] || 'N/A';
+                
+                return pRow;
+            });
+            
+            setupFilterUI();
+            mappingSection.classList.add('hidden');
+            filtersSection.classList.remove('hidden');
+            
+            // Initial analysis run
+            runAnalysis();
+            
+            toggleLoading(false);
+        }, 50);
+    }
+    
+    /**
+     * Sets up dynamic filter controls based on processed data.
+     */
+    function setupFilterUI() {
+        let filterHTML = '';
+        const hasDirection = processedData.some(row => row.Direction && row.Direction !== 'N/A');
+        
+        if (hasDirection) {
+            const uniqueDirections = [...new Set(processedData.map(r => r.Direction))];
+            filterHTML += `<h3>Direction</h3><div class="checkbox-group">`;
+            uniqueDirections.forEach(dir => {
+                filterHTML += `
+                    <label class="checkbox-item">
+                        <input type="checkbox" class="column-filter" data-key="Direction" value="${dir}" checked>
+                        ${dir}
+                    </label>
+                `;
+            });
+            filterHTML += `</div>`;
+        }
+        columnFiltersContainer.innerHTML = filterHTML;
+    }
+
+    /**
+     * Applies all filters to the processed data.
+     */
+    function applyFilters() {
+        const mustHaveText = document.getElementById('must-have-filter').value.toLowerCase();
+        const excludeText = document.getElementById('exclude-filter').value.toLowerCase();
+        
+        const mustHaves = mustHaveText ? mustHaveText.split(',').map(s => s.trim()).filter(Boolean) : [];
+        const excludes = excludeText ? excludeText.split(',').map(s => s.trim()).filter(Boolean) : [];
+
+        // Collect checked values from column filters
+        const columnFilterValues = {};
+        document.querySelectorAll('.column-filter').forEach(cb => {
+            if (!columnFilterValues[cb.dataset.key]) {
+                columnFilterValues[cb.dataset.key] = new Set();
+            }
+            if (cb.checked) {
+                columnFilterValues[cb.dataset.key].add(cb.value);
+            }
+        });
+
+        filteredData = processedData.filter(pRow => {
+            const rowString = Object.values(pRow.original).join(' ').toLowerCase();
+
+            // Global Exclude Filter
+            if (excludes.length > 0 && excludes.some(term => rowString.includes(term))) {
+                return false;
+            }
+            
+            // Global Must-Have Filter
+            if (mustHaves.length > 0 && !mustHaves.some(term => rowString.includes(term))) {
+                return false;
+            }
+
+            // Column-specific filters
+            for (const key in columnFilterValues) {
+                if (!columnFilterValues[key].has(pRow[key])) {
+                    return false;
+                }
+            }
+
+            return true;
+        });
+    }
+    
+    /**
+     * Main function to trigger filtering, analytics, and rendering.
+     */
+    function runAnalysis() {
+        toggleLoading(true);
+        // Use a timeout to allow the loading spinner to render
+        setTimeout(() => {
+            applyFilters();
+            updateSummaryStats();
+            updateCharts();
+            renderDataTable();
+
+            welcomeMessage.classList.add('hidden');
+            resultsSection.classList.remove('hidden');
+            toggleLoading(false);
+        }, 50);
+    }
+    
+    /**
+     * Calculates and displays summary statistics.
+     */
+    function updateSummaryStats() {
+        if (filteredData.length === 0) {
+            statsContainer.innerHTML = '<p>No data matches the current filters.</p>';
+            return;
+        }
+
+        const totalCalls = filteredData.length;
+        const totalDuration = filteredData.reduce((sum, row) => sum + row.Duration, 0);
+        const avgDuration = totalCalls > 0 ? (totalDuration / totalCalls) : 0;
+        const durations = filteredData.map(r => r.Duration);
+        const minDuration = Math.min(...durations);
+        const maxDuration = Math.max(...durations);
+        const uniqueCallers = new Set(filteredData.map(r => r.FromNumber)).size;
+        const uniqueCallees = new Set(filteredData.map(r => r.ToNumber)).size;
+        
+        const formatSeconds = (s) => new Date(s * 1000).toISOString().slice(11, 19);
+
+        const stats = [
+            { label: 'Total Calls', value: totalCalls.toLocaleString() },
+            { label: 'Avg Duration', value: formatSeconds(avgDuration) },
+            { label: 'Min Duration', value: formatSeconds(minDuration) },
+            { label: 'Max Duration', value: formatSeconds(maxDuration) },
+            { label: 'Unique Callers', value: uniqueCallers.toLocaleString() },
+            { label: 'Unique Callees', value: uniqueCallees.toLocaleString() },
+        ];
+
+        statsContainer.innerHTML = stats.map(stat => `
+            <div class="stat-card">
+                <div class="value">${stat.value}</div>
+                <div class="label">${stat.label}</div>
+            </div>
+        `).join('');
+    }
+
+    /**
+     * Updates all charts with the latest filtered data.
+     */
+    function updateCharts() {
+        renderBarChart('calls-per-user-chart', 'User');
+        renderPieChart('calls-by-direction-chart', 'Direction');
+        renderTimeSeriesChart('calls-over-time-chart');
+    }
+    
+    /**
+     * Generic function to render a bar or pie chart.
+     * @param {string} canvasId - The ID of the canvas element.
+     * @param {string} groupByKey - The key in the processed data to group by.
+     * @param {string} type - The chart type ('bar' or 'pie').
+     */
+    function renderChart(canvasId, groupByKey, type) {
+        if (!filteredData.length || !groupByKey) return;
+        
+        const counts = filteredData.reduce((acc, row) => {
+            const key = row[groupByKey] || 'N/A';
+            acc[key] = (acc[key] || 0) + 1;
+            return acc;
+        }, {});
+        
+        const sortedData = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+        const labels = sortedData.map(entry => entry[0]);
+        const data = sortedData.map(entry => entry[1]);
+
+        const ctx = document.getElementById(canvasId).getContext('2d');
+        if (chartInstances[canvasId]) {
+            chartInstances[canvasId].destroy();
+        }
+        
+        chartInstances[canvasId] = new Chart(ctx, {
+            type: type,
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: `Calls by ${groupByKey}`,
+                    data: data,
+                    backgroundColor: type === 'bar' ? 'rgba(63, 81, 181, 0.7)' : [
+                        'rgba(63, 81, 181, 0.7)', 'rgba(76, 175, 80, 0.7)', 'rgba(255, 152, 0, 0.7)',
+                        'rgba(244, 67, 54, 0.7)', 'rgba(156, 39, 176, 0.7)', 'rgba(3, 169, 244, 0.7)'
+                    ],
+                    borderColor: 'rgba(224, 224, 224, 0.5)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: { legend: { display: type === 'pie' } },
+                scales: type === 'bar' ? { y: { beginAtZero: true } } : {}
+            }
+        });
+    }
+    
+    function renderBarChart(canvasId, groupByKey) {
+        renderChart(canvasId, groupByKey, 'bar');
+    }
+    function renderPieChart(canvasId, groupByKey) {
+        renderChart(canvasId, groupByKey, 'pie');
+    }
+
+    /**
+     * Renders a time series line chart for call volume.
+     * @param {string} canvasId - The ID of the canvas element.
+     */
+    function renderTimeSeriesChart(canvasId) {
+        const validDates = filteredData.filter(d => d.DateTime);
+        if (validDates.length === 0) return;
+
+        const counts = validDates.reduce((acc, row) => {
+            const day = format(row.DateTime, 'yyyy-MM-dd');
+            acc[day] = (acc[day] || 0) + 1;
+            return acc;
+        }, {});
+        
+        const sortedData = Object.entries(counts).sort((a, b) => new Date(a[0]) - new Date(b[0]));
+        const labels = sortedData.map(entry => entry[0]);
+        const data = sortedData.map(entry => entry[1]);
+        
+        const ctx = document.getElementById(canvasId).getContext('2d');
+        if (chartInstances[canvasId]) {
+            chartInstances[canvasId].destroy();
+        }
+
+        chartInstances[canvasId] = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Call Volume',
+                    data: data,
+                    fill: false,
+                    borderColor: 'rgb(75, 192, 192)',
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+            }
+        });
+    }
+
+    /**
+     * Renders the filtered data into an HTML table.
+     */
+    function renderDataTable() {
+        const displayHeaders = Object.keys(columnMappings).filter(h => columnMappings[h] !== 'ignore');
+        
+        // Header Row
+        dataTableHead.innerHTML = `<tr>${displayHeaders.map(h => `<th>${h}</th>`).join('')}</tr>`;
+        
+        // Body Rows (display a max of 200 rows for performance)
+        const rowsToRender = filteredData.slice(0, 200);
+        dataTableBody.innerHTML = rowsToRender.map(pRow => {
+            const originalRow = pRow.original;
+            return `<tr>${displayHeaders.map(h => `<td>${originalRow[h] || ''}</td>`).join('')}</tr>`;
+        }).join('');
+    }
+
+})();
+</script>
+
+</body>
+</html>
