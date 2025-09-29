@@ -1,0 +1,46 @@
+Call ID,Time,Date,User,Direction,Notes,Duration (sec),To Number,From Number,Call Type,Status,Location,Tags
+1001,08:15:23,2025-09-01,jdoe,out,Follow-up on invoice,320,+14155550101,+14155550999,Voice,Completed,San Francisco,Support
+1002,09:05:10,2025-09-01,asmith,in,Missed call,0,+14155550202,+14155550101,Voice,Missed,Los Angeles,
+1003,10:45:00,2025-09-01,jdoe,out,Demo scheduled,600,+14155550303,+14155550999,Video,Completed,San Diego,Sales
+1004,11:30:45,2025-09-01,asmith,in,Call dropped,45,+14155550404,+14155550101,Voice,Completed,San Jose,
+1005,13:00:00,2025-09-01,jdoe,out,Left voicemail,90,+14155550505,+14155550999,Voice,Completed,Sacramento,Follow-up
+1006,14:15:12,2025-09-01,asmith,in,Returned call,180,+14155550606,+14155550101,Voice,Completed,Fresno,
+1007,15:45:30,2025-09-01,jdoe,out,Initial contact,240,+14155550707,+14155550999,Voice,Completed,Oakland,Prospect
+1008,16:30:00,2025-09-01,asmith,in,Declined call,0,+14155550808,+14155550101,Voice,Declined,Bakersfield,
+1009,17:10:20,2025-09-01,jdoe,out,Follow-up,300,+14155550909,+14155550999,Voice,Completed,Long Beach,Support
+1010,18:00:00,2025-09-01,asmith,in,Missed call,0,+14155551010,+14155550101,Voice,Missed,Glendale,
+1011,08:05:00,2025-09-02,jdoe,out,Meeting confirmation,180,+14155551111,+14155550999,Voice,Completed,Pasadena,Admin
+1012,09:20:00,2025-09-02,asmith,in,Call completed,210,+14155551212,+14155550101,Voice,Completed,Santa Monica,Sales
+1013,10:30:00,2025-09-02,jdoe,out,Product inquiry,150,+14155551313,+14155550999,Voice,Completed,San Bernardino,Support
+1014,11:45:00,2025-09-02,asmith,in,Voicemail received,0,+14155551414,+14155550101,Voice,Missed,Riverside,
+1015,13:00:00,2025-09-02,jdoe,out,Contract discussion,480,+14155551515,+14155550999,Video,Completed,Irvine,Legal
+1016,14:15:00,2025-09-02,asmith,in,Quick check-in,60,+14155551616,+14155550101,Voice,Completed,Anaheim,
+1017,15:30:00,2025-09-02,jdoe,out,Left voicemail,90,+14155551717,+14155550999,Voice,Completed,Orange,Follow-up
+1018,16:45:00,2025-09-02,asmith,in,Returned call,180,+14155551818,+14155550101,Voice,Completed,Fullerton,
+1019,17:50:00,2025-09-02,jdoe,out,Support escalation,360,+14155551919,+14155550999,Voice,Completed,Torrance,Support
+1020,18:55:00,2025-09-02,asmith,in,Declined call,0,+14155552020,+14155550101,Voice,Declined,Compton,
+1021,08:10:00,2025-09-03,jdoe,out,Sales pitch,420,+14155552121,+14155550999,Video,Completed,Carlsbad,Sales
+1022,09:25:00,2025-09-03,asmith,in,Missed call,0,+14155552222,+14155550101,Voice,Missed,Escondido,
+1023,10:40:00,2025-09-03,jdoe,out,Follow-up,300,+14155552323,+14155550999,Voice,Completed,Oceanside,Support
+1024,11:55:00,2025-09-03,asmith,in,Call completed,210,+14155552424,+14155550101,Voice,Completed,Temecula,Sales
+1025,13:10:00,2025-09-03,jdoe,out,Meeting setup,180,+14155552525,+14155550999,Voice,Completed,Murrieta,Admin
+1026,14:25:00,2025-09-03,asmith,in,Voicemail received,0,+14155552626,+14155550101,Voice,Missed,Hemet,
+1027,15:40:00,2025-09-03,jdoe,out,Product feedback,150,+14155552727,+14155550999,Voice,Completed,Corona,Support
+1028,16:55:00,2025-09-03,asmith,in,Quick check-in,60,+14155552828,+14155550101,Voice,Completed,Ontario,
+1029,18:10:00,2025-09-03,jdoe,out,Left voicemail,90,+14155552929,+14155550999,Voice,Completed,Fontana,Follow-up
+1030,08:25:00,2025-09-04,asmith,in,Returned call,180,+14155553030,+14155550101,Voice,Completed,Chino,
+1031,09:40:00,2025-09-04,jdoe,out,Support escalation,360,+14155553131,+14155550999,Voice,Completed,Pomona,Support
+1032,10:55:00,2025-09-04,asmith,in,Declined call,0,+14155553232,+14155550101,Voice,Declined,Whittier,
+1033,12:10:00,2025-09-04,jdoe,out,Sales pitch,420,+14155553333,+14155550999,Video,Completed,El Monte,Sales
+1034,13:25:00,2025-09-04,asmith,in,Missed call,0,+14155553434,+14155550101,Voice,Missed,West Covina,
+1035,14:40:00,2025-09-04,jdoe,out,Follow-up,300,+14155553535,+14155550999,Voice,Completed,Pasadena,Support
+1036,15:55:00,2025-09-04,asmith,in,Call completed,210,+14155553636,+14155550101,Voice,Completed,Alhambra,Sales
+1037,17:10:00,2025-09-04,jdoe,out,Meeting setup,180,+14155553737,+14155550999,Voice,Completed,Monterey Park,Admin
+1038,18:25:00,2025-09-04,asmith,in,Voicemail received,0,+14155553838,+14155550101,Voice,Missed,South Pasadena,
+1039,08:40:00,2025-09-05,jdoe,out,Product feedback,150,+14155553939,+14155550999,Voice,Completed,Arcadia,Support
+1040,09:55:00,2025-09-05,asmith,in,Quick check-in,60,+14155554040,+14155550101,Voice,Completed,Temple City,
+1041,11:10:00,2025-09-05,jdoe,out,Left voicemail,90,+14155554141,+14155550999,Voice,Completed,San Gabriel,Follow-up
+1042,12:25:00,2025-09-05,asmith,in,Returned call,180,+14155554242,+14155550101,Voice,Completed,Rosemead,
+1043,13:40:00,2025-09-05,jdoe,out,Support escalation,360,+14155554343,+14155550999,Voice,Completed,Montebello,Support
+1044,14:55:00,2025-09-05,asmith,in,Declined call,0,+14155554444,+14155550101,Voice,Declined,Pico Rivera,
+1045,16:10:00,2025-09-05,jdoe,out,Sales pitch,420,+14155554545
