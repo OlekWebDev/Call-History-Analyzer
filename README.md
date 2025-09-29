@@ -8,9 +8,9 @@ The Universal Call History Analyzer is a powerful, client-side business intellig
 Since the entire application runs in the browser, no sensitive call data is ever uploaded to a server, ensuring 100% privacy and security.
 
 **Live Demo & Screenshot**
-[dmeo link here coming soon]
+[demo link here coming soon]
 
-[Screenshot here]
+![screenshot1](https://github.com/user-attachments/assets/c3e7ed71-acd8-4ea1-bb84-4b704e0d35d0)
 
 **Key Features**
 This tool was engineered to be both powerful and user-friendly, providing a seamless analysis experience.
